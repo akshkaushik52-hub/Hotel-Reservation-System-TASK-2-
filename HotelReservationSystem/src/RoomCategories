@@ -1,0 +1,34 @@
+/**
+ * Supported room categories and their nightly rates.
+ */
+public enum RoomCategory {
+    STANDARD(1000.00),
+    DELUXE(1800.00),
+    SUITE(3000.00),
+    FAMILY(2500.00);
+
+    private final double pricePerNight;
+
+    RoomCategory(double pricePerNight) {
+        this.pricePerNight = pricePerNight;
+    }
+
+    public double getPricePerNight() {
+        return pricePerNight;
+    }
+
+    public static RoomCategory fromMenuChoice(int choice) {
+        switch (choice) {
+            case 1:
+                return STANDARD;
+            case 2:
+                return DELUXE;
+            case 3:
+                return SUITE;
+            case 4:
+                return FAMILY;
+            default:
+                throw new IllegalArgumentException("Invalid room category choice.");
+        }
+    }
+}
