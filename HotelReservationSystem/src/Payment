@@ -1,0 +1,73 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
+
+/**
+ * Simulates payment collection for a booking.
+ */
+public class Payment {
+    private final String transactionId;
+    private final double amount;
+    private final String method;
+    private final PaymentStatus status;
+
+    private Payment(String transactionId, double amount, String method, PaymentStatus status) {
+        this.transactionId = transactionId;
+        this.amount = amount;
+        this.method = method;
+        this.status = status;
+    }
+
+    public static Payment processPayment(double amount, Scanner scanner) {
+        System.out.println("\nPayment amount: Rs. " + String.format("%.2f", amount));
+        System.out.println("1. Card");
+        System.out.println("2. UPI");
+        System.out.println("3. Cash at counter");
+        System.out.print("Select payment method: ");
+
+        String choice = scanner.nextLine().trim();
+        String method;
+        switch (choice) {
+            case "1":
+                method = "Card";
+                break;
+            case "2":
+                method = "UPI";
+                break;
+            case "3":
+                method = "Cash";
+                break;
+            default:
+                System.out.println("Invalid payment method. Payment failed.");
+                return new Payment("N/A", amount, "Unknown", PaymentStatus.FAILED);
+        }
+
+        System.out.print("Type PAY to confirm payment: ");
+        String confirmation = scanner.nextLine().trim();
+        if (!"PAY".equalsIgnoreCase(confirmation)) {
+            System.out.println("Payment was not confirmed.");
+            return new Payment("N/A", amount, method, PaymentStatus.FAILED);
+        }
+
+        String transactionId = "TXN-" + LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        System.out.println("Payment successful. Transaction ID: " + transactionId);
+        return new Payment(transactionId, amount, method, PaymentStatus.PAID);
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public PaymentStatus getStatus() {
+        return status;
+    }
+}
