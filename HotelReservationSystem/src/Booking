@@ -1,0 +1,153 @@
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+
+/**
+ * Represents a room reservation made by a customer.
+ */
+public class Booking {
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    private final String bookingId;
+    private final Customer customer;
+    private final Room room;
+    private final LocalDate checkInDate;
+    private final LocalDate checkOutDate;
+    private final double totalCost;
+    private PaymentStatus paymentStatus;
+    private BookingStatus bookingStatus;
+    private final LocalDateTime createdAt;
+
+    public Booking(String bookingId,
+                   Customer customer,
+                   Room room,
+                   LocalDate checkInDate,
+                   LocalDate checkOutDate,
+                   PaymentStatus paymentStatus,
+                   BookingStatus bookingStatus,
+                   LocalDateTime createdAt) {
+        this.bookingId = bookingId;
+        this.customer = customer;
+        this.room = room;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.paymentStatus = paymentStatus;
+        this.bookingStatus = bookingStatus;
+        this.createdAt = createdAt;
+        this.totalCost = calculateCost(room, checkInDate, checkOutDate);
+    }
+
+    public static double calculateCost(Room room, LocalDate checkInDate, LocalDate checkOutDate) {
+        long nights = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
+        return nights * room.getPricePerNight();
+    }
+
+    public boolean overlaps(LocalDate requestedCheckIn, LocalDate requestedCheckOut) {
+        return bookingStatus == BookingStatus.ACTIVE
+                && requestedCheckIn.isBefore(checkOutDate)
+                && requestedCheckOut.isAfter(checkInDate);
+    }
+
+    public void cancel() {
+        bookingStatus = BookingStatus.CANCELLED;
+        if (paymentStatus == PaymentStatus.PAID) {
+            paymentStatus = PaymentStatus.REFUNDED;
+        }
+    }
+
+    public String getBookingId() {
+        return bookingId;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public BookingStatus getBookingStatus() {
+        return bookingStatus;
+    }
+
+    public long getStayDurationNights() {
+        return ChronoUnit.DAYS.between(checkInDate, checkOutDate);
+    }
+
+    public String toFileString() {
+        return String.join("|",
+                bookingId,
+                customer.getCustomerId(),
+                customer.getName(),
+                customer.getPhone(),
+                customer.getEmail(),
+                String.valueOf(room.getRoomNumber()),
+                room.getCategory().name(),
+                DATE_FORMAT.format(checkInDate),
+                DATE_FORMAT.format(checkOutDate),
+                String.format("%.2f", totalCost),
+                paymentStatus.name(),
+                bookingStatus.name(),
+                DATE_TIME_FORMAT.format(createdAt));
+    }
+
+    public static Booking fromFileString(String line, Room matchingRoom) throws InvalidDataException {
+        String[] parts = line.split("\\|");
+        if (parts.length != 13) {
+            throw new InvalidDataException("Invalid booking record: " + line);
+        }
+
+        try {
+            Customer customer = new Customer(parts[1], parts[2], parts[3], parts[4]);
+            int roomNumber = Integer.parseInt(parts[5]);
+            RoomCategory category = RoomCategory.valueOf(parts[6]);
+            Room room = matchingRoom != null ? matchingRoom : new Room(roomNumber, category, true);
+            LocalDate checkIn = LocalDate.parse(parts[7], DATE_FORMAT);
+            LocalDate checkOut = LocalDate.parse(parts[8], DATE_FORMAT);
+            PaymentStatus paymentStatus = PaymentStatus.valueOf(parts[10]);
+            BookingStatus bookingStatus = BookingStatus.valueOf(parts[11]);
+            LocalDateTime createdAt = LocalDateTime.parse(parts[12], DATE_TIME_FORMAT);
+
+            return new Booking(parts[0], customer, room, checkIn, checkOut,
+                    paymentStatus, bookingStatus, createdAt);
+        } catch (RuntimeException ex) {
+            throw new InvalidDataException("Unable to parse booking record: " + line, ex);
+        }
+    }
+
+    public String toDetailedString() {
+        return "\nBooking ID       : " + bookingId
+                + "\nCustomer ID      : " + customer.getCustomerId()
+                + "\nCustomer Name    : " + customer.getName()
+                + "\nPhone            : " + customer.getPhone()
+                + "\nEmail            : " + customer.getEmail()
+                + "\nRoom             : " + room.getRoomNumber() + " (" + room.getCategory() + ")"
+                + "\nCheck-in         : " + checkInDate
+                + "\nCheck-out        : " + checkOutDate
+                + "\nNights           : " + getStayDurationNights()
+                + "\nTotal Cost       : Rs. " + String.format("%.2f", totalCost)
+                + "\nPayment Status   : " + paymentStatus
+                + "\nBooking Status   : " + bookingStatus
+                + "\nCreated At       : " + createdAt;
+    }
+}
