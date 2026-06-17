@@ -1,0 +1,8 @@
+/**
+ * Result of a simulated payment attempt.
+ */
+public enum PaymentStatus {
+    PAID,
+    FAILED,
+    REFUNDED
+}
