@@ -1,0 +1,8 @@
+/**
+ * Raised when user-provided booking dates or selections are not valid.
+ */
+public class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
