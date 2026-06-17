@@ -1,0 +1,7 @@
+/**
+ * Tracks whether a reservation should block room availability.
+ */
+public enum BookingStatus {
+    ACTIVE,
+    CANCELLED
+}
