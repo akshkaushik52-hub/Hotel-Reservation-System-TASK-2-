@@ -1,0 +1,63 @@
+/**
+ * Represents one physical hotel room.
+ */
+public class Room {
+    private final int roomNumber;
+    private final RoomCategory category;
+    private boolean active;
+
+    public Room(int roomNumber, RoomCategory category, boolean active) {
+        this.roomNumber = roomNumber;
+        this.category = category;
+        this.active = active;
+    }
+
+    public int getRoomNumber() {
+        return roomNumber;
+    }
+
+    public RoomCategory getCategory() {
+        return category;
+    }
+
+    public double getPricePerNight() {
+        return category.getPricePerNight();
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public String toFileString() {
+        return roomNumber + "|" + category.name() + "|" + active;
+    }
+
+    public static Room fromFileString(String line) throws InvalidDataException {
+        String[] parts = line.split("\\|");
+        if (parts.length != 3) {
+            throw new InvalidDataException("Invalid room record: " + line);
+        }
+
+        try {
+            int number = Integer.parseInt(parts[0]);
+            RoomCategory category = RoomCategory.valueOf(parts[1]);
+            boolean active = Boolean.parseBoolean(parts[2]);
+            return new Room(number, category, active);
+        } catch (RuntimeException ex) {
+            throw new InvalidDataException("Unable to parse room record: " + line, ex);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Room %d | %-8s | Rs. %.2f/night | %s",
+                roomNumber,
+                category,
+                getPricePerNight(),
+                active ? "Available for booking" : "Inactive");
+    }
+}
